@@ -12,6 +12,9 @@ enum class Player {
   CHANCE_PUBLIC = 4
 };
 
+std::ostream& operator<<(std::ostream& os, const Player& player);
+std::istream& operator>>(std::istream& is, Player& player);
+
 bool isChance(Player player);
 
 struct InformationSet {
@@ -26,14 +29,14 @@ struct InformationSet {
 
   friend std::ostream& operator<<(std::ostream& os,
                                   const InformationSet& infoSet);
-  friend std::istream& operator>>(std::istream& is, InformationSet& infoSet)
+  friend std::istream& operator>>(std::istream& is, InformationSet& infoSet);
 };
 
 struct Node {
   Player _player;
-  InformationSet *_informationSet;
-  int _firstPlayerUtility;
-  int _secondPlayerUtility;
+  InformationSet *_informationSet = nullptr;
+  int _firstPlayerUtility = 0;
+  int _secondPlayerUtility = 0;
 
   std::vector<Node*> _children;
   std::vector<std::string> _labels;
@@ -48,13 +51,18 @@ struct Node {
   Node(int fpu, int spu)
       : _firstPlayerUtility(fpu), _secondPlayerUtility(spu) {}
   Node(Player p, InformationSet* is, std::vector<Node*> children)
-      : _player(p), _informationSet(is), _children(children), _labels(children.size()) {}
-  Node(Player p, InformationSet* is, std::vector<Node*> children, std::vector<std::string> labels)
+      : _player(p),
+        _informationSet(is),
+        _children(children),
+        _labels(children.size()) {}
+  Node(Player p,
+       InformationSet* is,
+       std::vector<Node*> children,
+       std::vector<std::string> labels)
       : _player(p), _informationSet(is), _children(children), _labels(labels) {}
-
 };
 
 void runRound(Node* root);
 
-void writeToFile(const Node* root);
-void readFromFile(const Node* root);
+void writeToFile(const Node* root, std::string fileName);
+Node* readFromFile(std::string fileName);

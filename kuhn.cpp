@@ -112,10 +112,5 @@ int main() {
   cout << "Facing Check Bet Q: " << toString(&checkBetIS[1]) << endl;
   cout << "Facing Check Bet K: " << toString(&checkBetIS[2]) << endl;
 
-  cout << endl << endl << endl;
-  while (true) {
-    playInstance(&root);
-    cout << endl;
-  }
-
+  writeToFile(&root, "kuhn.game");
 }

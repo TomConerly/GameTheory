@@ -138,9 +138,5 @@ int main() {
   cout << "value: " << root.computeValue(Player::FIRST) << " "
     << root.computeValue(Player::SECOND) << endl;
 
-  cout << endl << endl << endl;
-  while (true) {
-    playInstance(&root);
-    cout << endl;
-  }
+  writeToFile(&root, "dice.game");
 }
