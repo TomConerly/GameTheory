@@ -24,7 +24,7 @@ double Node::cfr(Player player,
   }
   if (isChance(_player)) {
     double res = 0;
-    for (auto child : _children) {
+    for (auto& child : _children) {
       res += child->cfr(player, probP1, probP2, probChance / _children.size());
     }
     return res;
@@ -63,7 +63,7 @@ double Node::cfr(Player player,
 }
 
 void Node::updateStrategy() {
-  for (auto node : _children) {
+  for (auto& node : _children) {
     node->updateStrategy();
   }
   if (isChance(_player))
@@ -96,7 +96,7 @@ double Node::computeValue(Player player) {
   }
   if (isChance(_player)) {
     double res = 0;
-    for (auto node : _children) {
+    for (auto& node : _children) {
       res += node->computeValue(player);
     }
     return res / _children.size();
@@ -170,11 +170,11 @@ istream& operator>>(istream& is, InformationSet& infoSet) {
 void collectInfoSets(const Node* at,
                      unordered_map<InformationSet*, int>& isMap) {
   if (at->_informationSet != nullptr &&
-      isMap.find(at->_informationSet) == isMap.end()) {
-    isMap.insert({at->_informationSet, isMap.size()});
+      isMap.find(at->_informationSet.get()) == isMap.end()) {
+    isMap.insert({at->_informationSet.get(), isMap.size()});
   }
-  for (const auto child : at->_children) {
-    collectInfoSets(child, isMap);
+  for (const auto& child : at->_children) {
+    collectInfoSets(child.get(), isMap);
   }
 }
 
@@ -185,7 +185,7 @@ void writeNode(const Node* at,
   if (at->_informationSet == nullptr)
     os << -1 << " ";
   else
-    os << isMap.find(at->_informationSet)->second << " ";
+    os << isMap.find(at->_informationSet.get())->second << " ";
   os << at->_firstPlayerUtility << " ";
   os << at->_secondPlayerUtility << " ";
 
@@ -197,7 +197,7 @@ void writeNode(const Node* at,
       else
         os << ch;
     os << " ";
-    writeNode(at->_children[i], isMap, os);
+    writeNode(at->_children[i].get(), isMap, os);
   }
 }
 
@@ -218,7 +218,7 @@ void writeToFile(const Node* root, string fileName) {
   outfile.close();
 }
 
-Node* readNode(const vector<InformationSet*>& isMap, istream& is) {
+unique_ptr<Node> readNode(const vector<shared_ptr<InformationSet>>& isMap, istream& is) {
   Player player;
   is >> player;
   int infoSetId;
@@ -229,7 +229,7 @@ Node* readNode(const vector<InformationSet*>& isMap, istream& is) {
   is >> secondPlayerUtility;
   int numChildren;
   is >> numChildren;
-  vector<Node*> children(numChildren);
+  vector<unique_ptr<Node>> children(numChildren);
   vector<string> labels(numChildren);
   for (int i = 0; i < numChildren; i++) {
     is >> labels[i];
@@ -239,23 +239,26 @@ Node* readNode(const vector<InformationSet*>& isMap, istream& is) {
     children[i] = readNode(isMap, is);
   }
   if (numChildren == 0) {
-    return new Node(firstPlayerUtility, secondPlayerUtility);
+    return make_unique<Node>(firstPlayerUtility, secondPlayerUtility);
   } else {
     assert(firstPlayerUtility == 0);
     assert(secondPlayerUtility == 0);
-    return new Node(player, infoSetId == -1 ? nullptr : isMap[infoSetId], children, labels);
+    return make_unique<Node>(player,
+                             infoSetId == -1 ? nullptr : isMap[infoSetId],
+                             move(children),
+                             move(labels));
   }
 }
 
-Node* readFromFile(string fileName) {
+unique_ptr<Node> readFromFile(string fileName) {
   ifstream infile;
   infile.open(fileName);
 
   int isMapSize;
   infile >> isMapSize;
-  vector<InformationSet*> isMap(isMapSize);
+  vector<shared_ptr<InformationSet>> isMap(isMapSize);
   for (int i = 0; i < isMapSize; i++) {
-    isMap[i] = new InformationSet(0);
+    isMap[i] = make_shared<InformationSet>(0);
     infile >> *isMap[i];
   }
   auto res = readNode(isMap, infile);

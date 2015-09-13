@@ -1,6 +1,7 @@
 #pragma once
 
 #include <iostream>
+#include <memory>
 #include <string>
 #include <vector>
 
@@ -34,11 +35,11 @@ struct InformationSet {
 
 struct Node {
   Player _player;
-  InformationSet *_informationSet = nullptr;
+  std::shared_ptr<InformationSet> _informationSet = nullptr;
   int _firstPlayerUtility = 0;
   int _secondPlayerUtility = 0;
 
-  std::vector<Node*> _children;
+  std::vector<std::unique_ptr<Node>> _children;
   std::vector<std::string> _labels;
 
   // returns counterfactual value
@@ -50,19 +51,24 @@ struct Node {
 
   Node(int fpu, int spu)
       : _firstPlayerUtility(fpu), _secondPlayerUtility(spu) {}
-  Node(Player p, InformationSet* is, std::vector<Node*> children)
+  Node(Player p,
+       std::shared_ptr<InformationSet> is,
+       std::vector<std::unique_ptr<Node>> children)
       : _player(p),
         _informationSet(is),
-        _children(children),
+        _children(std::move(children)),
         _labels(children.size()) {}
   Node(Player p,
-       InformationSet* is,
-       std::vector<Node*> children,
+       std::shared_ptr<InformationSet> is,
+       std::vector<std::unique_ptr<Node>> children,
        std::vector<std::string> labels)
-      : _player(p), _informationSet(is), _children(children), _labels(labels) {}
+      : _player(p),
+        _informationSet(is),
+        _children(std::move(children)),
+        _labels(labels) {}
 };
 
 void runRound(Node* root);
 
 void writeToFile(const Node* root, std::string fileName);
-Node* readFromFile(std::string fileName);
+std::unique_ptr<Node> readFromFile(std::string fileName);

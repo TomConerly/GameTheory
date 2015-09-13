@@ -12,7 +12,7 @@ int main(int argc, char** argv) {
        << root->computeValue(Player::SECOND) << endl;
 
   while (true) {
-    playInstance(root);
+    playInstance(root.get());
     cout << endl;
   }
 }

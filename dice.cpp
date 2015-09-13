@@ -42,22 +42,22 @@ bool satisfied(Bid b, vector<int> dice) {
   return count >= b.count;
 }
 
-vector<Node*> makeNodes(Player toAct, vector<Bid>& bids) {
+vector<unique_ptr<Node>> makeNodes(Player toAct, vector<Bid>& bids) {
   if (bids.size() > 0 && bids[bids.size() - 1].count == -1) {
     Bid lastBid = bids[bids.size() - 2];
-    vector<Node*> res;
+    vector<unique_ptr<Node>> res;
     for (int i = 0; i < diceSides * diceSides; i++) {
       int fpDie = i % diceSides;
       int spDie = i / diceSides;
       if ((toAct == Player::FIRST) == satisfied(lastBid, {fpDie, spDie})) {
-        res.push_back(new Node(1, -1));
+        res.push_back(make_unique<Node>(1, -1));
       } else {
-        res.push_back(new Node(-1, 1));
+        res.push_back(make_unique<Node>(-1, 1));
       }
     }
     return res;
   }
-  vector<vector<Node*>> children(diceSides * diceSides);
+  vector<vector<unique_ptr<Node>>> children(diceSides * diceSides);
   vector<string> labels;
   for (auto bid : allBids) {
     if (bids.size() > 0 && bid.count != -1) {
@@ -75,18 +75,18 @@ vector<Node*> makeNodes(Player toAct, vector<Bid>& bids) {
     auto nodes = makeNodes(toAct == Player::FIRST ? Player::SECOND : Player::FIRST, bids);
     bids.pop_back();
     for (int i = 0; i < diceSides * diceSides; i++) {
-      children[i].push_back(nodes[i]);
+      children[i].push_back(move(nodes[i]));
     }
     labels.push_back(bid.toString());
   }
-  vector<Node*> res;
-  vector<InformationSet*> is;
+  vector<unique_ptr<Node>> res;
+  vector<shared_ptr<InformationSet>> is;
   for (int i = 0; i < diceSides; i++)
-    is.push_back(new InformationSet(children[0].size()));
+    is.push_back(make_shared<InformationSet>(children[0].size()));
 
   for (int i = 0; i < diceSides * diceSides; i++) {
     int isIdx = toAct == Player::FIRST ? i % diceSides : i / diceSides;
-    res.push_back(new Node(toAct, is[isIdx], children[i], labels));
+    res.push_back(make_unique<Node>(toAct, is[isIdx], move(children[i]), labels));
   }
   return res;
 }
@@ -102,17 +102,17 @@ int main() {
   vector<Bid> bids;
   auto start = makeNodes(Player::FIRST, bids);
 
-  vector<Node*> spStart;
+  vector<unique_ptr<Node>> spStart;
   for (int i = 0; i < diceSides; i++) {
-    vector<Node*> children;
+    vector<unique_ptr<Node>> children;
     vector<string> labels;
     for (int j = 0; j < diceSides; j++) {
-      children.push_back(start[i + j * 6]);
+      children.push_back(move(start[i + j * 6]));
       ostringstream os;
       os << "SP rolled: " << (j+1);
       labels.push_back(os.str());
     }
-    spStart.push_back(new Node(Player::CHANCE_SECOND, nullptr, children, labels));
+    spStart.push_back(make_unique<Node>(Player::CHANCE_SECOND, nullptr, move(children), labels));
   }
 
   vector<string> labels;
@@ -122,7 +122,7 @@ int main() {
       labels.push_back(os.str());
   }
 
-  Node root(Player::CHANCE_FIRST, nullptr, spStart, labels);
+  Node root(Player::CHANCE_FIRST, nullptr, move(spStart), labels);
 
   for (int i = 0; i < 2000; i++) {
     if (i % 25 == 0) {

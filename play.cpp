@@ -19,7 +19,7 @@ static double genRandom() {
   return generate_canonical<double, 64>(e1);
 }
 
-int playInstance(Node* root) {
+int playInstance(const Node* root) {
   if (genRandom(0, 1) == 0) {
     return playInstance(Player::FIRST, root);
   } else {
@@ -27,7 +27,7 @@ int playInstance(Node* root) {
   }
 }
 
-static int play(Player human, Node* at) {
+static int play(Player human, const Node* at) {
   if (at->_children.size() == 0) {
     return human == Player::FIRST ? at->_firstPlayerUtility : at->_secondPlayerUtility;
   }
@@ -35,16 +35,16 @@ static int play(Player human, Node* at) {
     int option = genRandom(0, at->_children.size()-1);
     if (at->_player == Player::CHANCE_PUBLIC) {
       cout << "Chance picked: " << at->_labels[option] << endl;
-      return play(human, at->_children[option]);
+      return play(human, at->_children[option].get());
     } else if ((at->_player == Player::CHANCE_FIRST &&
                 human == Player::FIRST) ||
                (at->_player == Player::CHANCE_SECOND &&
                 human == Player::SECOND)) {
       cout << "You were dealt: " << at->_labels[option] << endl;
-      return play(human, at->_children[option]);
+      return play(human, at->_children[option].get());
     } else {
       cout << "Your opponent was dealt something hidden." << endl;
-      int utility = play(human, at->_children[option]);
+      int utility = play(human, at->_children[option].get());
       cout << "Your opponent was dealt: " << at->_labels[option] << endl;
       return utility;
     }
@@ -62,7 +62,7 @@ static int play(Player human, Node* at) {
       getline(cin, option);
       for (int i = 0; i < at->_children.size(); i++) {
         if (option == at->_labels[i]) {
-          return play(human, at->_children[i]);
+          return play(human, at->_children[i].get());
         }
       }
       cout << "That wasn't one of the options. Please pick again." << endl;
@@ -70,7 +70,7 @@ static int play(Player human, Node* at) {
   } else {
     double res = 0;
     double totalStrategy = 0.0;
-    InformationSet* is = at->_informationSet;
+    auto is = at->_informationSet;
     for (int i = 0; i < is->_cumulativeStrategy.size(); i++) {
       totalStrategy += is->_cumulativeStrategy[i];
     }
@@ -80,7 +80,7 @@ static int play(Player human, Node* at) {
       double prob = is->_cumulativeStrategy[i] / totalStrategy;
       if (rand < prob) {
         cout << "Opponent played: " << at->_labels[i] << endl;
-        return play(human, at->_children[i]);
+        return play(human, at->_children[i].get());
       } else {
         rand -= prob;
       }
@@ -89,7 +89,7 @@ static int play(Player human, Node* at) {
   }
 }
 
-int playInstance(Player human, Node* root) {
+int playInstance(Player human, const Node* root) {
   int utility= play(human, root);
   cout << "Your utility was: " << utility << endl;
   return utility;
