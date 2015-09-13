@@ -32,7 +32,7 @@ ostream& operator<<(ostream& os, const Bid& b) {
 }
 
 vector<Bid> allBids;
-                   
+
 bool satisfied(Bid b, vector<int> dice) {
   int count = 0;
   for (int d : dice) {
@@ -72,7 +72,8 @@ vector<unique_ptr<Node>> makeNodes(Player toAct, vector<Bid>& bids) {
       }
     }
     bids.push_back(bid);
-    auto nodes = makeNodes(toAct == Player::FIRST ? Player::SECOND : Player::FIRST, bids);
+    auto nodes = makeNodes(
+        toAct == Player::FIRST ? Player::SECOND : Player::FIRST, bids);
     bids.pop_back();
     for (int i = 0; i < diceSides * diceSides; i++) {
       children[i].push_back(move(nodes[i]));
@@ -86,7 +87,8 @@ vector<unique_ptr<Node>> makeNodes(Player toAct, vector<Bid>& bids) {
 
   for (int i = 0; i < diceSides * diceSides; i++) {
     int isIdx = toAct == Player::FIRST ? i % diceSides : i / diceSides;
-    res.push_back(make_unique<Node>(toAct, is[isIdx], move(children[i]), labels));
+    res.push_back(
+        make_unique<Node>(toAct, is[isIdx], move(children[i]), labels));
   }
   return res;
 }
@@ -109,17 +111,18 @@ int main() {
     for (int j = 0; j < diceSides; j++) {
       children.push_back(move(start[i + j * 6]));
       ostringstream os;
-      os << "SP rolled: " << (j+1);
+      os << "SP rolled: " << (j + 1);
       labels.push_back(os.str());
     }
-    spStart.push_back(make_unique<Node>(Player::CHANCE_SECOND, nullptr, move(children), labels));
+    spStart.push_back(make_unique<Node>(
+        Player::CHANCE_SECOND, nullptr, move(children), labels));
   }
 
   vector<string> labels;
   for (int i = 0; i < diceSides; i++) {
-      ostringstream os;
-      os << "FP rolled: " << (i+1);
-      labels.push_back(os.str());
+    ostringstream os;
+    os << "FP rolled: " << (i + 1);
+    labels.push_back(os.str());
   }
 
   Node root(Player::CHANCE_FIRST, nullptr, move(spStart), labels);
@@ -136,7 +139,7 @@ int main() {
   }
 
   cout << "value: " << root.computeValue(Player::FIRST) << " "
-    << root.computeValue(Player::SECOND) << endl;
+       << root.computeValue(Player::SECOND) << endl;
 
   writeToFile(&root, "dice.game");
 }

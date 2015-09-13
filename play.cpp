@@ -29,10 +29,11 @@ int playInstance(const Node* root) {
 
 static int play(Player human, const Node* at) {
   if (at->_children.size() == 0) {
-    return human == Player::FIRST ? at->_firstPlayerUtility : at->_secondPlayerUtility;
+    return human == Player::FIRST ? at->_firstPlayerUtility
+                                  : at->_secondPlayerUtility;
   }
-  if (isChance(at->_player))  {
-    int option = genRandom(0, at->_children.size()-1);
+  if (isChance(at->_player)) {
+    int option = genRandom(0, at->_children.size() - 1);
     if (at->_player == Player::CHANCE_PUBLIC) {
       cout << "Chance picked: " << at->_labels[option] << endl;
       return play(human, at->_children[option].get());
@@ -90,7 +91,7 @@ static int play(Player human, const Node* at) {
 }
 
 int playInstance(Player human, const Node* root) {
-  int utility= play(human, root);
+  int utility = play(human, root);
   cout << "Your utility was: " << utility << endl;
   return utility;
 }

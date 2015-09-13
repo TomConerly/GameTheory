@@ -7,12 +7,12 @@
 
 using namespace std;
 
-// JQ, JK, QJ, QK, KJ, KQ 
+// JQ, JK, QJ, QK, KJ, KQ
 vector<bool> fpWin = {false, false, true, false, true, true};
 vector<int> fpIS = {0, 0, 1, 1, 2, 2};
 vector<int> spIS = {1, 2, 0, 2, 0, 1};
 
-string toString(InformationSet *is) {
+string toString(InformationSet* is) {
   double res = 0;
   double totalStrategy = 0.0;
   for (int i = 0; i < is->_cumulativeStrategy.size(); i++) {
@@ -34,8 +34,10 @@ int main() {
   vector<unique_ptr<Node>> betFold;
   vector<unique_ptr<Node>> betCall;
   for (int i = 0; i < 6; i++) {
-    checkCheck.push_back(make_unique<Node>(fpWin[i] ? 1 : -1, fpWin[i] ? -1 : 1));
-    checkBetCall.push_back(make_unique<Node>(fpWin[i] ? 2 : -2, fpWin[i] ? -2 : 2));
+    checkCheck.push_back(
+        make_unique<Node>(fpWin[i] ? 1 : -1, fpWin[i] ? -1 : 1));
+    checkBetCall.push_back(
+        make_unique<Node>(fpWin[i] ? 2 : -2, fpWin[i] ? -2 : 2));
     checkBetFold.push_back(make_unique<Node>(-1, 1));
     betFold.push_back(make_unique<Node>(1, -1));
     betCall.push_back(make_unique<Node>(fpWin[i] ? 2 : -2, fpWin[i] ? -2 : 2));
@@ -87,10 +89,8 @@ int main() {
     children.push_back(move(check[i]));
     children.push_back(move(bet[i]));
     vector<string> labels = {"Check", "Bet"};
-    start.push_back(make_unique<Node>(Player::FIRST,
-                                      startIS[fpIS[i]],
-                                      move(children),
-                                      labels));
+    start.push_back(make_unique<Node>(
+        Player::FIRST, startIS[fpIS[i]], move(children), labels));
   }
 
   vector<unique_ptr<Node>> children;
@@ -117,7 +117,7 @@ int main() {
 
   children.clear();
   children.push_back(move(dealSP[0]));
-  children.push_back(move(dealSP[1])); 
+  children.push_back(move(dealSP[1]));
   children.push_back(move(dealSP[2]));
   labels = {"FP dealt J", "FP dealt Q", "FP dealt K"};
   Node root(Player::CHANCE_FIRST, nullptr, move(children), labels);

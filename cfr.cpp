@@ -19,8 +19,7 @@ double Node::cfr(Player player,
                  double probP2,
                  double probChance) {
   if (_children.size() == 0) {
-    return player == Player::FIRST ? _firstPlayerUtility
-      : _secondPlayerUtility;
+    return player == Player::FIRST ? _firstPlayerUtility : _secondPlayerUtility;
   }
   if (isChance(_player)) {
     double res = 0;
@@ -34,29 +33,29 @@ double Node::cfr(Player player,
   for (int i = 0; i < _children.size(); i++) {
     if (_player == Player::FIRST) {
       counterfactualValues[i] =
-        _children[i]->cfr(player,
-                          probP1 * _informationSet->_currentStrategy[i],
-                          probP2,
-                          probChance);
+          _children[i]->cfr(player,
+                            probP1 * _informationSet->_currentStrategy[i],
+                            probP2,
+                            probChance);
     } else {
       counterfactualValues[i] =
-        _children[i]->cfr(player,
-                          probP1,
-                          probP2 * _informationSet->_currentStrategy[i],
-                          probChance);
+          _children[i]->cfr(player,
+                            probP1,
+                            probP2 * _informationSet->_currentStrategy[i],
+                            probChance);
     }
     counterfactualValue +=
-      _informationSet->_currentStrategy[i] * counterfactualValues[i];
+        _informationSet->_currentStrategy[i] * counterfactualValues[i];
   }
   if (_player == player) {
     for (int i = 0; i < _children.size(); i++) {
       double probMe = player == Player::FIRST ? probP1 : probP2;
       double probOther =
-        probChance * (player == Player::FIRST ? probP2 : probP1);
+          probChance * (player == Player::FIRST ? probP2 : probP1);
       _informationSet->_cumulativeRegret[i] +=
-        probOther * (counterfactualValues[i] - counterfactualValue);
+          probOther * (counterfactualValues[i] - counterfactualValue);
       _informationSet->_cumulativeStrategy[i] +=
-        probMe * _informationSet->_currentStrategy[i];
+          probMe * _informationSet->_currentStrategy[i];
     }
   }
   return counterfactualValue;
@@ -78,7 +77,7 @@ void Node::updateStrategy() {
       _informationSet->_currentStrategy[i] = 1. / _children.size();
     } else {
       _informationSet->_currentStrategy[i] =
-        max(0., _informationSet->_cumulativeRegret[i]) / totalRegret;
+          max(0., _informationSet->_cumulativeRegret[i]) / totalRegret;
     }
   }
 }
@@ -119,13 +118,13 @@ void Node::clearCumulativeStrategy() {
   if (_children.size() == 0) {
     return;
   }
-  for (auto &child : _children) {
+  for (auto& child : _children) {
     child->clearCumulativeStrategy();
   }
   if (_informationSet == nullptr) {
     return;
   }
-  for (auto &cumStrat : _informationSet->_cumulativeStrategy) {
+  for (auto& cumStrat : _informationSet->_cumulativeStrategy) {
     cumStrat = 0;
   }
 }
@@ -159,7 +158,7 @@ istream& operator>>(istream& is, InformationSet& infoSet) {
   for (auto& d : infoSet._cumulativeRegret)
     is >> d;
   infoSet._cumulativeStrategy.resize(size);
-  for (auto& d: infoSet._cumulativeStrategy)
+  for (auto& d : infoSet._cumulativeStrategy)
     is >> d;
   infoSet._currentStrategy.resize(size);
   for (auto& d : infoSet._currentStrategy)
@@ -214,11 +213,12 @@ void writeToFile(const Node* root, string fileName) {
   for (auto is : isReverseMap)
     outfile << *is << " " << endl;
 
-  writeNode(root, isMap, outfile);  
+  writeNode(root, isMap, outfile);
   outfile.close();
 }
 
-unique_ptr<Node> readNode(const vector<shared_ptr<InformationSet>>& isMap, istream& is) {
+unique_ptr<Node> readNode(const vector<shared_ptr<InformationSet>>& isMap,
+                          istream& is) {
   Player player;
   is >> player;
   int infoSetId;

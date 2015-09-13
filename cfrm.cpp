@@ -28,8 +28,7 @@ struct Node {
   int _numDeals;
 
   Node(Player p, int numDeals, vector<Node> c)
-      : _player(p), _numDeals(numDeals)
-  {
+      : _player(p), _numDeals(numDeals) {
     _choices.reserve(c.size());
     for (auto& node : c) {
       _choices.push_back(Choice(node, numDeals, 1. / c.size()));
@@ -89,7 +88,7 @@ struct Node {
       auto& probOther = player == Player::FIRST ? probP2 : probP1;
       for (auto& choice : _choices) {
         for (int i = 0; i < _numDeals; i++) {
-          regret += probOther * ( - counterfactualValue[i]);
+          regret += probOther * (-counterfactualValue[i]);
           cumulativeStrategy += probMe * choice._currentStrategy[i];
         }
       }
@@ -98,8 +97,4 @@ struct Node {
   }
 };
 
-
-void runCounterFactualRegretMinimizationRound(Node* root) {
-
-
-}
+void runCounterFactualRegretMinimizationRound(Node* root) {}
