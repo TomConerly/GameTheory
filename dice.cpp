@@ -129,14 +129,17 @@ int main() {
 
   for (int i = 0; i < 2000; i++) {
     if (i % 25 == 0) {
+      setStrategyFromCumulativeStrategy(&root);
       cout << i << " value: " << root.computeValue(Player::FIRST) << " "
            << root.computeValue(Player::SECOND) << endl;
+      setStrategyFromCumulativeRegret(&root);
     }
     if (i == 1000) {
       root.clearCumulativeStrategy();
     }
     runRound(&root);
   }
+  setStrategyFromCumulativeStrategy(&root);
 
   cout << "value: " << root.computeValue(Player::FIRST) << " "
        << root.computeValue(Player::SECOND) << endl;

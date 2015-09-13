@@ -69,16 +69,10 @@ static int play(Player human, const Node* at) {
       cout << "That wasn't one of the options. Please pick again." << endl;
     }
   } else {
-    double res = 0;
-    double totalStrategy = 0.0;
     auto is = at->_informationSet;
-    for (int i = 0; i < is->_cumulativeStrategy.size(); i++) {
-      totalStrategy += is->_cumulativeStrategy[i];
-    }
     double rand = genRandom();
-
-    for (int i = 0; i < is->_cumulativeStrategy.size(); i++) {
-      double prob = is->_cumulativeStrategy[i] / totalStrategy;
+    for (int i = 0; i < is->_currentStrategy.size(); i++) {
+      double prob = is->_currentStrategy[i];
       if (rand < prob) {
         cout << "Opponent played: " << at->_labels[i] << endl;
         return play(human, at->_children[i].get());

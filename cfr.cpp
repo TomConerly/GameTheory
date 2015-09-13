@@ -101,16 +101,11 @@ double Node::computeValue(Player player) {
     return res / _children.size();
   }
   double res = 0;
-  double totalStrategy = 0.0;
   for (int i = 0; i < _children.size(); i++) {
     res += _children[i]->computeValue(player) *
-           _informationSet->_cumulativeStrategy[i];
-    totalStrategy += _informationSet->_cumulativeStrategy[i];
+           _informationSet->_currentStrategy[i];
   }
-  if (totalStrategy == 0.0) {
-    return 0.0;
-  }
-  return res / totalStrategy;
+  return res;
 }
 
 void Node::clearCumulativeStrategy() {
@@ -126,6 +121,54 @@ void Node::clearCumulativeStrategy() {
   }
   for (auto& cumStrat : _informationSet->_cumulativeStrategy) {
     cumStrat = 0;
+  }
+}
+
+void setStrategyFromCumulativeStrategy(Node* at) {
+  if (at->_children.size() == 0) {
+    return;
+  }
+  for (auto& node : at->_children) {
+    setStrategyFromCumulativeStrategy(node.get());
+  }
+  if (isChance(at->_player)) {
+    return;
+  }
+  double totalStrategy = 0.0;
+  for (int i = 0; i < at->_children.size(); i++) {
+    totalStrategy += at->_informationSet->_cumulativeStrategy[i];
+  }
+  for (int i = 0; i < at->_children.size(); i++) {
+    if (totalStrategy == 0.0) {
+      at->_informationSet->_currentStrategy[i] = 1. / at->_children.size();
+    } else {
+      at->_informationSet->_currentStrategy[i] =
+          at->_informationSet->_cumulativeStrategy[i] / totalStrategy;
+    }
+  }
+}
+
+void setStrategyFromCumulativeRegret(Node* at) {
+  if (at->_children.size() == 0) {
+    return;
+  }
+  for (auto& node : at->_children) {
+    setStrategyFromCumulativeRegret(node.get());
+  }
+  if (isChance(at->_player)) {
+    return;
+  }
+  double totalRegret = 0.0;
+  for (int i = 0; i < at->_children.size(); i++) {
+    totalRegret += max(0., at->_informationSet->_cumulativeRegret[i]);
+  }
+  for (int i = 0; i < at->_children.size(); i++) {
+    if (totalRegret == 0.0) {
+      at->_informationSet->_currentStrategy[i] = 1. / at->_children.size();
+    } else {
+      at->_informationSet->_currentStrategy[i] =
+          max(0., at->_informationSet->_cumulativeRegret[i]) / totalRegret;
+    }
   }
 }
 

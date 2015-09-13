@@ -13,15 +13,9 @@ vector<int> fpIS = {0, 0, 1, 1, 2, 2};
 vector<int> spIS = {1, 2, 0, 2, 0, 1};
 
 string toString(InformationSet* is) {
-  double res = 0;
-  double totalStrategy = 0.0;
-  for (int i = 0; i < is->_cumulativeStrategy.size(); i++) {
-    totalStrategy += is->_cumulativeStrategy[i];
-  }
-
   ostringstream os;
-  for (int i = 0; i < is->_cumulativeStrategy.size(); i++) {
-    os << is->_cumulativeStrategy[i] / totalStrategy;
+  for (int i = 0; i < is->_currentStrategy.size(); i++) {
+    os << is->_currentStrategy[i];
     os << " ";
   }
   return os.str();
@@ -128,6 +122,7 @@ int main() {
     }
     runRound(&root);
   }
+  setStrategyFromCumulativeStrategy(&root);
 
   cout << "value: " << root.computeValue(Player::FIRST) << " "
        << root.computeValue(Player::SECOND) << endl;
