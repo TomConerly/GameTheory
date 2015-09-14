@@ -5,3 +5,8 @@ dice
 *.swp
 *.dSYM
 *.game
+CMakeFiles/*
+CMakeCache.txt
+Makefile
+cmake_install.cmake
+libcore.a
