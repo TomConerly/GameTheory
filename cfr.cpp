@@ -308,3 +308,31 @@ unique_ptr<Node> readFromFile(string fileName) {
   infile.close();
   return res;
 }
+
+unique_ptr<Node> copy(
+    const Node* at,
+    const unordered_map<InformationSet*, shared_ptr<InformationSet>>& isMap) {
+  if (at->_children.size() == 0) {
+    return make_unique<Node>(at->_firstPlayerUtility, at->_secondPlayerUtility);
+  }
+  vector<unique_ptr<Node>> children;
+  for (const auto& child : at->_children) {
+    children.push_back(copy(child.get(), isMap));
+  }
+  shared_ptr<InformationSet> newIs = nullptr;
+  if (at->_informationSet.get() != nullptr) {
+    newIs = isMap.find(at->_informationSet.get())->second;
+  }
+  return make_unique<Node>(at->_player, newIs, move(children), at->_labels);
+}
+
+unique_ptr<Node> copy(const Node* root) {
+  unordered_map<InformationSet*, int> isMap;
+  collectInfoSets(root, isMap);
+
+  unordered_map<InformationSet*, shared_ptr<InformationSet>> isMap2;
+  for (const auto it : isMap) {
+    isMap2[it.first] = make_shared<InformationSet>(*it.first);
+  }
+  return copy(root, isMap2);
+}

@@ -72,5 +72,7 @@ void runRound(Node* root);
 void setStrategyFromCumulativeStrategy(Node* root);
 void setStrategyFromCumulativeRegret(Node* root);
 
+std::unique_ptr<Node> copy(const Node* root);
+
 void writeToFile(const Node* root, std::string fileName);
 std::unique_ptr<Node> readFromFile(std::string fileName);
