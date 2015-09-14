@@ -116,8 +116,8 @@ int main() {
   labels = {"FP dealt J", "FP dealt Q", "FP dealt K"};
   Node root(Player::CHANCE_FIRST, nullptr, move(children), labels);
 
-  for (int i = 0; i < 20000; i++) {
-    if (i == 10000) {
+  for (int i = 0; i < 200000; i++) {
+    if (i == 100000) {
       root.clearCumulativeStrategy();
     }
     runRound(&root);
@@ -144,4 +144,14 @@ int main() {
   cout << "Facing Check Bet K: " << toString(checkBetIS[2].get()) << endl;
 
   writeToFile(&root, "kuhn.game");
+
+  setStrategyToCounterStrategy(&root, Player::FIRST);
+  cout << "First player countering value: " << root.computeValue(Player::FIRST)
+       << " " << root.computeValue(Player::SECOND) << endl;
+  setStrategyFromCumulativeStrategy(&root);
+
+  setStrategyToCounterStrategy(&root, Player::SECOND);
+  cout << "Second player countering value: " << root.computeValue(Player::FIRST)
+       << " " << root.computeValue(Player::SECOND) << endl;
+  setStrategyFromCumulativeStrategy(&root);
 }

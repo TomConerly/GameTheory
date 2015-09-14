@@ -127,14 +127,14 @@ int main() {
 
   Node root(Player::CHANCE_FIRST, nullptr, move(spStart), labels);
 
-  for (int i = 0; i < 2000; i++) {
+  for (int i = 0; i < 20000; i++) {
     if (i % 25 == 0) {
       setStrategyFromCumulativeStrategy(&root);
       cout << i << " value: " << root.computeValue(Player::FIRST) << " "
            << root.computeValue(Player::SECOND) << endl;
       setStrategyFromCumulativeRegret(&root);
     }
-    if (i == 1000) {
+    if (i == 10000) {
       root.clearCumulativeStrategy();
     }
     runRound(&root);
@@ -145,4 +145,14 @@ int main() {
        << root.computeValue(Player::SECOND) << endl;
 
   writeToFile(&root, "dice.game");
+
+  setStrategyToCounterStrategy(&root, Player::FIRST);
+  cout << "First player countering value: " << root.computeValue(Player::FIRST)
+       << " " << root.computeValue(Player::SECOND) << endl;
+  setStrategyFromCumulativeStrategy(&root);
+
+  setStrategyToCounterStrategy(&root, Player::SECOND);
+  cout << "Second player countering value: " << root.computeValue(Player::FIRST)
+       << " " << root.computeValue(Player::SECOND) << endl;
+  setStrategyFromCumulativeStrategy(&root);
 }

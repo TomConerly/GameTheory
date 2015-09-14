@@ -22,11 +22,13 @@ struct InformationSet {
   std::vector<double> _cumulativeRegret;
   std::vector<double> _cumulativeStrategy;
   std::vector<double> _currentStrategy;
+  std::vector<double> _currentEV;
 
   InformationSet(int numActions)
       : _cumulativeRegret(numActions),
         _cumulativeStrategy(numActions),
-        _currentStrategy(numActions, 1. / numActions) {}
+        _currentStrategy(numActions, 1. / numActions),
+        _currentEV(numActions) {}
 
   friend std::ostream& operator<<(std::ostream& os,
                                   const InformationSet& infoSet);
@@ -71,6 +73,8 @@ struct Node {
 void runRound(Node* root);
 void setStrategyFromCumulativeStrategy(Node* root);
 void setStrategyFromCumulativeRegret(Node* root);
+// Changes player's strategy to the optimal counter strategy
+void setStrategyToCounterStrategy(Node* root, Player player);
 
 std::unique_ptr<Node> copy(const Node* root);
 

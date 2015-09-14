@@ -336,3 +336,54 @@ unique_ptr<Node> copy(const Node* root) {
   }
   return copy(root, isMap2);
 }
+
+double setCounterStrategy(Node* root, Player player, double probOther) {
+  if (root->_children.size() == 0) {
+    return player == Player::FIRST ? root->_firstPlayerUtility
+                                   : root->_secondPlayerUtility;
+  }
+  if (isChance(root->_player)) {
+    double res = 0.0;
+    for (auto& child : root->_children) {
+      res += setCounterStrategy(
+          child.get(), player, probOther / root->_children.size());
+    }
+    return res / root->_children.size();
+  }
+  if (root->_player != player) {
+    double res = 0.0;
+    for (int i = 0; i < root->_children.size(); i++) {
+      res += root->_informationSet->_currentStrategy[i] *
+             setCounterStrategy(
+                 root->_children[i].get(),
+                 player,
+                 probOther * root->_informationSet->_currentStrategy[i]);
+    }
+    return res;
+  } else {
+    double res = std::numeric_limits<int>::min();
+    for (int i = 0; i < root->_children.size(); i++) {
+      double ev =
+          setCounterStrategy(root->_children[i].get(), player, probOther);
+      root->_informationSet->_currentEV[i] += ev * probOther;
+      res = max(res, ev);
+    }
+    int bestIdx = 0;
+    for (int i = 0; i < root->_children.size(); i++) {
+      if (root->_informationSet->_currentEV[i] >
+          root->_informationSet->_currentEV[bestIdx]) {
+        bestIdx = i;
+      }
+    }
+    for (int i = 0; i < root->_children.size(); i++) {
+      root->_informationSet->_currentStrategy[i] = 0.0;
+    }
+    root->_informationSet->_currentStrategy[bestIdx] = 1.0;
+    return res;
+  }
+}
+
+void setStrategyToCounterStrategy(Node* root, Player player) {
+  assert(player == Player::FIRST || player == Player::SECOND);
+  setCounterStrategy(root, player, 1.0);
+}
