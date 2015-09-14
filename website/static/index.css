@@ -1,0 +1,10 @@
+
+	#print_output {
+		border: 1px solid black;
+		min-height: 100px;
+		width: 800px;
+		padding: 20px;
+		
+		height: 400px;
+    overflow: auto;
+	}
