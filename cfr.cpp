@@ -337,53 +337,92 @@ unique_ptr<Node> copy(const Node* root) {
   return copy(root, isMap2);
 }
 
-double setCounterStrategy(Node* root, Player player, double probOther) {
-  if (root->_children.size() == 0) {
-    return player == Player::FIRST ? root->_firstPlayerUtility
-                                   : root->_secondPlayerUtility;
-  }
-  if (isChance(root->_player)) {
-    double res = 0.0;
-    for (auto& child : root->_children) {
-      res += setCounterStrategy(
-          child.get(), player, probOther / root->_children.size());
-    }
-    return res / root->_children.size();
-  }
-  if (root->_player != player) {
-    double res = 0.0;
-    for (int i = 0; i < root->_children.size(); i++) {
-      res += root->_informationSet->_currentStrategy[i] *
-             setCounterStrategy(
-                 root->_children[i].get(),
-                 player,
-                 probOther * root->_informationSet->_currentStrategy[i]);
-    }
-    return res;
-  } else {
-    double res = std::numeric_limits<int>::min();
-    for (int i = 0; i < root->_children.size(); i++) {
-      double ev =
-          setCounterStrategy(root->_children[i].get(), player, probOther);
-      root->_informationSet->_currentEV[i] += ev * probOther;
-      res = max(res, ev);
-    }
-    int bestIdx = 0;
-    for (int i = 0; i < root->_children.size(); i++) {
-      if (root->_informationSet->_currentEV[i] >
-          root->_informationSet->_currentEV[bestIdx]) {
-        bestIdx = i;
-      }
-    }
-    for (int i = 0; i < root->_children.size(); i++) {
-      root->_informationSet->_currentStrategy[i] = 0.0;
-    }
-    root->_informationSet->_currentStrategy[bestIdx] = 1.0;
-    return res;
-  }
-}
+struct Entry {
+  Node* node;
+  double probOther;
+  Entry(Node* n, double p) : node(n), probOther(p) {}
+};
 
 void setStrategyToCounterStrategy(Node* root, Player player) {
   assert(player == Player::FIRST || player == Player::SECOND);
-  setCounterStrategy(root, player, 1.0);
+  vector<vector<Entry>> bfsOrder = {{Entry(root, 1.0)}};
+  for (int i = 0; i < bfsOrder.size(); i++) {
+    for (auto entry : bfsOrder[i]) {
+      auto node = entry.node;
+      if (node->_informationSet != nullptr) {
+        fill(node->_informationSet->_currentEV.begin(),
+             node->_informationSet->_currentEV.end(),
+             0);
+      }
+      if (node->_children.size() == 0) {
+        continue;
+      } else {
+        if (i + 1 == bfsOrder.size()) {
+          bfsOrder.push_back({});
+        }
+        if (isChance(node->_player)) {
+          for (auto& child : node->_children) {
+            bfsOrder[i + 1].push_back(
+                Entry(child.get(), entry.probOther / node->_children.size()));
+          }
+        } else if (node->_player != player) {
+          for (int j = 0; j < node->_children.size(); j++) {
+            bfsOrder[i + 1].push_back(
+                Entry(node->_children[j].get(),
+                      node->_informationSet->_currentStrategy[j]));
+          }
+        } else {
+          for (auto& child : node->_children) {
+            bfsOrder[i + 1].push_back(Entry(child.get(), entry.probOther));
+          }
+        }
+      }
+    }
+  }
+
+  for (auto it = bfsOrder.rbegin(); it != bfsOrder.rend(); ++it) {
+    for (auto entry : *it) {
+      auto node = entry.node;
+      if (node->_children.size() == 0) {
+        node->_ev = player == Player::FIRST ? node->_firstPlayerUtility
+                                            : node->_secondPlayerUtility;
+      } else if (isChance(node->_player)) {
+        double res = 0.0;
+        for (auto& child : node->_children) {
+          res += child->_ev;
+        }
+        node->_ev = res / node->_children.size();
+      } else if (node->_player != player) {
+        double res = 0.0;
+        for (int i = 0; i < node->_children.size(); i++) {
+          res += node->_informationSet->_currentStrategy[i] *
+                 node->_children[i]->_ev;
+        }
+        node->_ev = res;
+      } else {
+        for (int i = 0; i < node->_children.size(); i++) {
+          node->_informationSet->_currentEV[i] +=
+              node->_children[i]->_ev * entry.probOther;
+        }
+      }
+    }
+    for (auto entry : *it) {
+      auto node = entry.node;
+      if (node->_player != player || node->_children.size() == 0) {
+        continue;
+      }
+      int bestIdx = 0;
+      for (int i = 0; i < node->_children.size(); i++) {
+        if (node->_informationSet->_currentEV[i] >
+            node->_informationSet->_currentEV[bestIdx]) {
+          bestIdx = i;
+        }
+      }
+      for (int i = 0; i < node->_children.size(); i++) {
+        node->_informationSet->_currentStrategy[i] = 0.0;
+      }
+      node->_informationSet->_currentStrategy[bestIdx] = 1.0;
+      node->_ev = node->_children[bestIdx]->_ev;
+    }
+  }
 }

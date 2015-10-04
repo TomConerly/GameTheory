@@ -44,6 +44,8 @@ struct Node {
   std::vector<std::unique_ptr<Node>> _children;
   std::vector<std::string> _labels;
 
+  double _ev;
+
   // returns counterfactual value
   double cfr(Player player, double probP1, double probP2, double probChance);
 
