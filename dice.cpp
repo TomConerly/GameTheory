@@ -1,13 +1,20 @@
 #include "cfr.h"
 #include "play.h"
 
+#include <gflags/gflags.h>
 #include <iostream>
 #include <sstream>
 #include <string>
 
 using namespace std;
 
-static constexpr int diceSides = 6;
+DEFINE_int32(diceSides, 6, "Number of sides a die.");
+DEFINE_int32(numRounds, 10000, "Number of rounds to run");
+DEFINE_int32(clearAfter,
+             5000,
+             "Clear the cumulative strategy after this many rounds.");
+DEFINE_int32(printEvery, 100, "When to compute the current EV");
+DEFINE_string(outputFile, "dice.game", "");
 
 struct Bid {
   int count, value;
@@ -46,9 +53,9 @@ vector<unique_ptr<Node>> makeNodes(Player toAct, vector<Bid>& bids) {
   if (bids.size() > 0 && bids[bids.size() - 1].count == -1) {
     Bid lastBid = bids[bids.size() - 2];
     vector<unique_ptr<Node>> res;
-    for (int i = 0; i < diceSides * diceSides; i++) {
-      int fpDie = i % diceSides;
-      int spDie = i / diceSides;
+    for (int i = 0; i < FLAGS_diceSides * FLAGS_diceSides; i++) {
+      int fpDie = i % FLAGS_diceSides;
+      int spDie = i / FLAGS_diceSides;
       if ((toAct == Player::FIRST) == satisfied(lastBid, {fpDie, spDie})) {
         res.push_back(make_unique<Node>(1, 0));
       } else {
@@ -57,7 +64,7 @@ vector<unique_ptr<Node>> makeNodes(Player toAct, vector<Bid>& bids) {
     }
     return res;
   }
-  vector<vector<unique_ptr<Node>>> children(diceSides * diceSides);
+  vector<vector<unique_ptr<Node>>> children(FLAGS_diceSides * FLAGS_diceSides);
   vector<string> labels;
   for (auto bid : allBids) {
     if (bids.size() > 0 && bid.count != -1) {
@@ -75,27 +82,30 @@ vector<unique_ptr<Node>> makeNodes(Player toAct, vector<Bid>& bids) {
     auto nodes = makeNodes(
         toAct == Player::FIRST ? Player::SECOND : Player::FIRST, bids);
     bids.pop_back();
-    for (int i = 0; i < diceSides * diceSides; i++) {
+    for (int i = 0; i < FLAGS_diceSides * FLAGS_diceSides; i++) {
       children[i].push_back(move(nodes[i]));
     }
     labels.push_back(bid.toString());
   }
   vector<unique_ptr<Node>> res;
   vector<shared_ptr<InformationSet>> is;
-  for (int i = 0; i < diceSides; i++)
+  for (int i = 0; i < FLAGS_diceSides; i++)
     is.push_back(make_shared<InformationSet>(children[0].size()));
 
-  for (int i = 0; i < diceSides * diceSides; i++) {
-    int isIdx = toAct == Player::FIRST ? i % diceSides : i / diceSides;
+  for (int i = 0; i < FLAGS_diceSides * FLAGS_diceSides; i++) {
+    int isIdx =
+        toAct == Player::FIRST ? i % FLAGS_diceSides : i / FLAGS_diceSides;
     res.push_back(
         make_unique<Node>(toAct, is[isIdx], move(children[i]), labels));
   }
   return res;
 }
 
-int main() {
+int main(int argc, char** argv) {
+  gflags::ParseCommandLineFlags(&argc, &argv, true);
+
   for (int count = 1; count <= 2; count++) {
-    for (int value = 0; value < diceSides; value++) {
+    for (int value = 0; value < FLAGS_diceSides; value++) {
       allBids.push_back(Bid(count, value));
     }
   }
@@ -105,11 +115,11 @@ int main() {
   auto start = makeNodes(Player::FIRST, bids);
 
   vector<unique_ptr<Node>> spStart;
-  for (int i = 0; i < diceSides; i++) {
+  for (int i = 0; i < FLAGS_diceSides; i++) {
     vector<unique_ptr<Node>> children;
     vector<string> labels;
-    for (int j = 0; j < diceSides; j++) {
-      children.push_back(move(start[i + j * diceSides]));
+    for (int j = 0; j < FLAGS_diceSides; j++) {
+      children.push_back(move(start[i + j * FLAGS_diceSides]));
       ostringstream os;
       os << "SP rolled: " << (j + 1);
       labels.push_back(os.str());
@@ -119,7 +129,7 @@ int main() {
   }
 
   vector<string> labels;
-  for (int i = 0; i < diceSides; i++) {
+  for (int i = 0; i < FLAGS_diceSides; i++) {
     ostringstream os;
     os << "FP rolled: " << (i + 1);
     labels.push_back(os.str());
@@ -127,14 +137,14 @@ int main() {
 
   Node root(Player::CHANCE_FIRST, nullptr, move(spStart), labels);
 
-  for (int i = 0; i < 20000; i++) {
-    if (i % 25 == 0) {
+  for (int i = 0; i < FLAGS_numRounds; i++) {
+    if (i % FLAGS_printEvery == 0) {
       setStrategyFromCumulativeStrategy(&root);
       cout << i << " value: " << root.computeValue(Player::FIRST) << " "
            << root.computeValue(Player::SECOND) << endl;
       setStrategyFromCumulativeRegret(&root);
     }
-    if (i == 10000) {
+    if (i == FLAGS_clearAfter) {
       root.clearCumulativeStrategy();
     }
     runRound(&root);
@@ -144,7 +154,7 @@ int main() {
   cout << "value: " << root.computeValue(Player::FIRST) << " "
        << root.computeValue(Player::SECOND) << endl;
 
-  writeToFile(&root, "dice.game");
+  writeToFile(&root, FLAGS_outputFile);
 
   setStrategyToCounterStrategy(&root, Player::FIRST);
   cout << "First player countering value: " << root.computeValue(Player::FIRST)
