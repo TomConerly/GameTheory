@@ -50,9 +50,9 @@ vector<unique_ptr<Node>> makeNodes(Player toAct, vector<Bid>& bids) {
       int fpDie = i % diceSides;
       int spDie = i / diceSides;
       if ((toAct == Player::FIRST) == satisfied(lastBid, {fpDie, spDie})) {
-        res.push_back(make_unique<Node>(1, -1));
+        res.push_back(make_unique<Node>(1, 0));
       } else {
-        res.push_back(make_unique<Node>(-1, 1));
+        res.push_back(make_unique<Node>(0, 1));
       }
     }
     return res;
@@ -109,7 +109,7 @@ int main() {
     vector<unique_ptr<Node>> children;
     vector<string> labels;
     for (int j = 0; j < diceSides; j++) {
-      children.push_back(move(start[i + j * 6]));
+      children.push_back(move(start[i + j * diceSides]));
       ostringstream os;
       os << "SP rolled: " << (j + 1);
       labels.push_back(os.str());
